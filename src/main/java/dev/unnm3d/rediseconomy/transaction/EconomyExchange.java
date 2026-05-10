@@ -200,7 +200,7 @@ public class EconomyExchange {
                             //If target is null, it has been sent from the server
                             amount, null, reason + stackTrace));
                     plugin.getScheduler().runTask(() -> plugin.getServer().getPluginManager().callEvent(transactionEvent));
-                    return (long) plugin.getCurrenciesManager().getRedisManager().getConnectionSync(commands -> commands.eval(
+                    return (Long) plugin.getCurrenciesManager().getRedisManager().getConnectionSync(commands -> commands.eval(
                             "local a=redis.call('incr',KEYS[1])redis.call('hset',KEYS[2],a,ARGV[1])if tonumber(ARGV[2])>0 then redis.call('hexpire',KEYS[2],ARGV[2],'FIELDS',1,a)end;return a",
                             ScriptOutputType.INTEGER,
                             new String[]{
