@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'dev.unnm3d'
-version = '4.5.13'
+version = '4.5.14'
 
 // CI runs and retries must produce distinct versions, including in plugin metadata.
 def ciBuildNumber = providers.environmentVariable('GITHUB_RUN_NUMBER')
@@ -17,34 +17,35 @@ if (ciBuildNumber.isPresent()) {
 repositories {
     mavenCentral()
     maven {
-        url 'https://jitpack.io'
+        url = 'https://jitpack.io'
     }
     maven {
-        url 'https://repo.papermc.io/repository/maven-public/'
+        url = 'https://repo.papermc.io/repository/maven-public/'
     }
     maven {
-        url 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+        url = 'https://repo.extendedclip.com/releases/'
     }
     maven {
-        url 'https://repo.essentialsx.net/releases/'
+        url = 'https://repo.essentialsx.net/releases/'
     }
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.17-R0.1-SNAPSHOT'
-    compileOnly 'org.projectlombok:lombok:1.18.46'
-    compileOnly 'net.kyori:adventure-text-minimessage:4.25.0'
-    implementation 'io.lettuce:lettuce-core:6.8.2.RELEASE'
-    implementation 'de.exlll:configlib-yaml:4.6.1'
-    implementation 'com.github.Anon8281:UniversalScheduler:0.1.6'
+    compileOnly 'io.papermc.paper:paper-api:26.3.build.248-stable'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    compileOnly 'net.kyori:adventure-text-minimessage:5.2.0'
+    implementation 'io.lettuce:lettuce-core:7.9.0.RELEASE'
+    implementation 'de.exlll:configlib-yaml:4.8.1'
+    implementation 'com.github.Anon8281:UniversalScheduler:0.1.7'
+    implementation 'org.bstats:bstats-bukkit:3.2.1'
 
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7.1'
-    compileOnly 'me.clip:placeholderapi:2.11.6'
-    compileOnly 'net.essentialsx:EssentialsX:2.21.0'
-    compileOnly 'com.github.Zrips:CMI-API:9.7.14.3'
+    compileOnly 'me.clip:placeholderapi:2.12.3'
+    compileOnly 'net.essentialsx:EssentialsX:2.21.2'
+    compileOnly 'com.github.Zrips:CMI-API:9.8.6.4'
     compileOnly(files('libs/XConomy-Bukkit-2.26.3.jar'))
 
-    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
 }
 
 jar {
@@ -75,15 +76,23 @@ shadowJar {
     relocate 'io.lettuce', 'dev.unnm3d.shaded.lettuce'
     relocate 'io.netty', 'dev.unnm3d.shaded.lettucedep.netty'
     relocate 'org.reactivestreams', 'dev.unnm3d.shaded.lettucedep.reactivestreams'
+    relocate 'org.jspecify', 'dev.unnm3d.shaded.lettucedep.jspecify'
     relocate 'com.github.Anon8281.universalScheduler', 'dev.unnm3d.shaded.universalScheduler'
+    relocate 'org.bstats', 'dev.unnm3d.shaded.bstats'
     minimize()
     exclude 'org/slf4j/**'
 }
 
 def targetJavaVersion = 21
 
-// Compile against the Java 21 API regardless of which JDK runs Gradle, so the
-// build works on both a JDK 21 and a newer JDK (25+) without a toolchain lookup.
+// paper-api 26.x is published for Java 25, but the plugin keeps Java 21 bytecode so the
+// same jar still loads on 1.20.5-1.21.x servers. Let Gradle resolve the newer API anyway.
+java {
+    disableAutoTargetJvm()
+}
+
+// Compile against the Java 21 API while reading the Java 25 class files of paper-api,
+// which needs Gradle to run on JDK 25 or newer.
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.release.set(targetJavaVersion)
@@ -92,7 +101,7 @@ tasks.withType(JavaCompile).configureEach {
 processResources {
     def props = [version: version]
     inputs.properties props
-    filteringCharset 'UTF-8'
+    filteringCharset = 'UTF-8'
     filesMatching('plugin.yml') {
         expand props
     }
